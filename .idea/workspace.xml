@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d52a29ea-1a15-4aa8-8df9-83c503c7decc" name="Changes" comment="Added BOX LOGIC for every direction">
+    <list default="true" id="d52a29ea-1a15-4aa8-8df9-83c503c7decc" name="Changes" comment="Added win conditions, handle win; check win if moving, can_move variable and dependencies; Win text; abandon and properly reset everything.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +95,15 @@
       <option name="project" value="LOCAL" />
       <updated>1729017815765</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Added win conditions, handle win; check win if moving, can_move variable and dependencies; Win text; abandon and properly reset everything.">
+      <option name="closed" value="true" />
+      <created>1729019203353</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1729019203353</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -104,6 +111,7 @@
     <MESSAGE value="move up" />
     <MESSAGE value="Added working movements for each direction" />
     <MESSAGE value="Added BOX LOGIC for every direction" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added BOX LOGIC for every direction" />
+    <MESSAGE value="Added win conditions, handle win; check win if moving, can_move variable and dependencies; Win text; abandon and properly reset everything." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added win conditions, handle win; check win if moving, can_move variable and dependencies; Win text; abandon and properly reset everything." />
   </component>
 </project>
