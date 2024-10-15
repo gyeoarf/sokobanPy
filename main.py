@@ -1,7 +1,5 @@
 import tkinter as tk
 import copy
-import os
-import sys
 
 window = tk.Tk()
 window.geometry('800x600')
@@ -81,12 +79,6 @@ info_auteur.grid(column = 1, row = 499, columnspan = 3)
 #END Text zone ---------------------------------------------------
 
 #FONCTIONS--------------------------------------------------------
-"""def clear_console(): #TODO: A SUPPRIMER APRES TEST (used for debug atm)
-    if os.name == 'nt':
-        os.system('cls')
-    else:
-        os.system('clear')"""
-
 def draw_board():
     global backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, nbcaisses, nbcaisses_a_pousser
 

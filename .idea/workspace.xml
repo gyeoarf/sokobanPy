@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d52a29ea-1a15-4aa8-8df9-83c503c7decc" name="Changes" comment="gitignore push">
+    <list default="true" id="d52a29ea-1a15-4aa8-8df9-83c503c7decc" name="Changes" comment="Removed some debugs print; changed check_win logic to fix issue where the player could win by walking on the holes, as they were not replaced by '+' and '*' for the boxes in Holes.&#10;Changed draw function to take these changes into account (the player and box on holes).&#10;some changes on movement functions.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -36,7 +36,7 @@
   "keyToString": {
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "main",
     "settings.editor.selected.configurable": "preferences.keymap"
   }
 }]]></component>
@@ -120,7 +120,15 @@
       <option name="project" value="LOCAL" />
       <updated>1729019794913</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Removed some debugs print; changed check_win logic to fix issue where the player could win by walking on the holes, as they were not replaced by '+' and '*' for the boxes in Holes.&#10;Changed draw function to take these changes into account (the player and box on holes).&#10;some changes on movement functions.">
+      <option name="closed" value="true" />
+      <created>1729022829928</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1729022829928</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -130,6 +138,7 @@
     <MESSAGE value="Added BOX LOGIC for every direction" />
     <MESSAGE value="Added win conditions, handle win; check win if moving, can_move variable and dependencies; Win text; abandon and properly reset everything." />
     <MESSAGE value="gitignore push" />
-    <option name="LAST_COMMIT_MESSAGE" value="gitignore push" />
+    <MESSAGE value="Removed some debugs print; changed check_win logic to fix issue where the player could win by walking on the holes, as they were not replaced by '+' and '*' for the boxes in Holes.&#10;Changed draw function to take these changes into account (the player and box on holes).&#10;some changes on movement functions." />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed some debugs print; changed check_win logic to fix issue where the player could win by walking on the holes, as they were not replaced by '+' and '*' for the boxes in Holes.&#10;Changed draw function to take these changes into account (the player and box on holes).&#10;some changes on movement functions." />
   </component>
 </project>
