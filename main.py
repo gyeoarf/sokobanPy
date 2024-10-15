@@ -2,7 +2,7 @@ import tkinter as tk
 
 window = tk.Tk()
 window.geometry('800x600')
-
+window.title('Sokoban')
 #Init variables
 level = 1
 score = 0
@@ -16,17 +16,22 @@ y_caisse = []
 x_char = []
 y_char = []
 caisse = []
-game_board = [[' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', '$', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', '.', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '@'],
-              [' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
+game_board = [[' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
+              ['#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              ['#', ' ', '$', ' ', '#', '#', '#', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '@'],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
               ]
+
+#Calcul du nombre de caisses
+nbcaisses = 0
+for i in range(len(game_board)):
+    nbcaisses += game_board[i].count('$')
 
 dim_case = 50 #Taille de chaque case
 
@@ -39,8 +44,6 @@ hole = tk.PhotoImage(file="assets/hole.gif")
 
 backgd = tk.Canvas(window, width = len(game_board[0])*dim_case, height=len(game_board)*dim_case, bg="#FFFFFF")
 backgd.grid(rowspan=500)
-
-
 
 #Text zone -------------------------------------------------------
 info_lvl = tk.Label(window, text='Niveau' + str(level))
@@ -84,7 +87,9 @@ def draw_board():
             if game_board[i][j] == '#':  # Wall
                 backgd.create_image(x, y, image=mur, anchor='nw')
             elif game_board[i][j] == '@':  # Personnage
-                backgd.create_image(x, y, image=perso, anchor='nw')
+                char = backgd.create_image(x, y, image=perso, anchor='nw')
+                x_char.append(x)
+                y_char.append(y)
             elif game_board[i][j] == '.':  # But
                 backgd.create_image(x, y, image=hole, anchor='nw')
             elif game_board[i][j] == '$':  # Caisse
@@ -95,8 +100,25 @@ def draw_board():
     for i in range(nbcaisses):
         backgd.tag_raise(caisse[i])
 
+def up(evt):
+    global x_char, y_char, backgd, movecount, char, new_y
+    new_y = y_char[0] - 50
+    movecount += 1
+    backgd.coords(char, x_char[0], new_y*50) #TODO: Maj game_board
+    print(x_char, y_char, new_y)
+    info_vmoves.config(text=str(movecount))
 
 #END FONCTIONS----------------------------------------------------
 
+
+#COMMANDES--------------------------------------------------------
+window.bind_all('<z>', up)
+"""window.bind_all('<q>', left)
+window.bind_all('<s>', down)
+window.bind_all('<d>', right)"""
+#END COMMANDES----------------------------------------------------
+
 draw_board()
+print(nbcaisses)
+print(x_char, y_char)
 window.mainloop()
