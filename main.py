@@ -21,7 +21,7 @@ game_board = [[' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' '],
               ['#', ' ', '$', ' ', '#', '#', '#', ' ', ' ', ' ', ' '],
               [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
               [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+              [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
               [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
               [' ', ' ', ' ', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
               [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '@'],
@@ -101,11 +101,115 @@ def draw_board():
         backgd.tag_raise(caisse[i])
 
 def up(evt):
-    global x_char, y_char, backgd, movecount, char, new_y
-    new_y = y_char[0] - 50
+    global x_char, y_char, backgd, movecount, char, game_board
+
+    # Calculate new y position
+    new_y = y_char[0] - 50  # Moving up means decreasing y by 50
+
+    # Check if the move is within bounds and not blocked by a wall or a box
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_y = new_y // 50
+
+    if next_y < 0 or game_board[next_y][current_x] == '#':
+        return  # Block movement if out of bounds or moving into a wall
+
+    # Update character position on the board
+    game_board[current_y][current_x] = ' '  # Clear old position
+    game_board[next_y][current_x] = '@'     # Move to new position
+
+    # Move the character in the canvas
+    backgd.coords(char, x_char[0], new_y)
+
+    # Update the character's y position
+    y_char[0] = new_y
+
+    # Update move count and display
     movecount += 1
-    backgd.coords(char, x_char[0], new_y*50) #TODO: Maj game_board
-    print(x_char, y_char, new_y)
+    info_vmoves.config(text=str(movecount))
+
+def left(evt):
+    global x_char, y_char, backgd, movecount, char, game_board
+
+    # Calculate new x position (moving left means decreasing x)
+    new_x = x_char[0] - 50
+
+    # Check if the move is within bounds and not blocked by a wall or a box
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_x = new_x // 50
+
+    if next_x < 0 or game_board[current_y][next_x] == '#':
+        return  # Block movement if out of bounds or moving into a wall
+
+    # Update character position on the board
+    game_board[current_y][current_x] = ' '  # Clear old position
+    game_board[current_y][next_x] = '@'     # Move to new position
+
+    # Move the character in the canvas
+    backgd.coords(char, new_x, y_char[0])
+
+    # Update the character's x position
+    x_char[0] = new_x
+
+    # Update move count and display
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
+
+def right(evt):
+    global x_char, y_char, backgd, movecount, char, game_board
+
+    # Calculate new x position (moving right means increasing x)
+    new_x = x_char[0] + 50
+
+    # Check if the move is within bounds and not blocked by a wall or a box
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_x = new_x // 50
+
+    if next_x >= len(game_board[0]) or game_board[current_y][next_x] == '#':
+        return  # Block movement if out of bounds or moving into a wall
+
+    # Update character position on the board
+    game_board[current_y][current_x] = ' '  # Clear old position
+    game_board[current_y][next_x] = '@'     # Move to new position
+
+    # Move the character in the canvas
+    backgd.coords(char, new_x, y_char[0])
+
+    # Update the character's x position
+    x_char[0] = new_x
+
+    # Update move count and display
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
+
+def down(evt):
+    global x_char, y_char, backgd, movecount, char, game_board
+
+    # Calculate new y position (moving down means increasing y)
+    new_y = y_char[0] + 50
+
+    # Check if the move is within bounds and not blocked by a wall or a box
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_y = new_y // 50
+
+    if next_y >= len(game_board) or game_board[next_y][current_x] == '#':
+        return  # Block movement if out of bounds or moving into a wall
+
+    # Update character position on the board
+    game_board[current_y][current_x] = ' '  # Clear old position
+    game_board[next_y][current_x] = '@'     # Move to new position
+
+    # Move the character in the canvas
+    backgd.coords(char, x_char[0], new_y)
+
+    # Update the character's y position
+    y_char[0] = new_y
+
+    # Update move count and display
+    movecount += 1
     info_vmoves.config(text=str(movecount))
 
 #END FONCTIONS----------------------------------------------------
@@ -113,9 +217,9 @@ def up(evt):
 
 #COMMANDES--------------------------------------------------------
 window.bind_all('<z>', up)
-"""window.bind_all('<q>', left)
+window.bind_all('<q>', left)
 window.bind_all('<s>', down)
-window.bind_all('<d>', right)"""
+window.bind_all('<d>', right)
 #END COMMANDES----------------------------------------------------
 
 draw_board()
