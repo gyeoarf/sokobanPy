@@ -28,7 +28,7 @@ sudo apt-get install python3-tk
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/sokoban.git
+   git clone https://github.com/gyeoarf/sokoban.git
    ```
 2. Run:
    ```bash
