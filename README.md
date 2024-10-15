@@ -5,9 +5,9 @@ Sokoban is a japanese puzzle game where you push boxes into holes. Currently sch
 
 ## Features
 
-- **Intuitive Controls**: Use keyboard keys for movement:
-  - **W** - Up
-  - **A** - Left
+- **AZERTY CONTROLS FOR NOW**: Use keyboard keys for movement:
+  - **Z** - Up
+  - **Q** - Left
   - **S** - Down
   - **D** - Right
 - **Level Management**: Supports multiple levels with varying difficulty.
