@@ -1,5 +1,7 @@
 import tkinter as tk
 import copy
+import os
+import sys
 
 window = tk.Tk()
 window.geometry('800x600')
@@ -13,6 +15,7 @@ best_pushes = 0
 pushes = 0
 movecount = 0
 timespent = 0
+nbBoxesOnHoles = 0
 x_caisse = []
 y_caisse = []
 x_char = []
@@ -78,6 +81,12 @@ info_auteur.grid(column = 1, row = 499, columnspan = 3)
 #END Text zone ---------------------------------------------------
 
 #FONCTIONS--------------------------------------------------------
+"""def clear_console(): #TODO: A SUPPRIMER APRES TEST (used for debug atm)
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')"""
+
 def draw_board():
     global backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, nbcaisses, nbcaisses_a_pousser
 
@@ -97,20 +106,27 @@ def draw_board():
                 x_caisse.append(i)
                 y_caisse.append(j)
                 caisse.append(backgd.create_image(x + 25, y + 25, image=box, anchor='center'))
+            elif game_board[i][j] == '+': #Character on hole
+                char = backgd.create_image(x, y, image=perso, anchor='nw')
+                x_char.append(x)
+                y_char.append(y)
+                backgd.create_image(x, y, image=hole, anchor='nw')
+            elif game_board[i][j] == '*': #Box on hole
+                x_caisse.append(i)
+                y_caisse.append(j)
+                caisse.append(backgd.create_image(x + 25, y + 25, image=box, anchor='center'))
+                backgd.create_image(x, y, image=hole, anchor='nw')
     backgd.tag_raise(char)
     for i in range(nbcaisses):
         backgd.tag_raise(caisse[i])
 
 """CHECKING AND HANDLING THE WIN"""
 def check_win():
-    global game_board, nbcaisses
-
-    for i in range(len(game_board)): #Run through the game board
-        for j in range(len(game_board[0])):
-            if game_board[i][j] == '.': #If there is a goal remaining on the board
-                if game_board[i][j] != '$': #If there is no box on the goal
-                    return False
-    return True
+    global game_board, nbBoxesOnHoles, nbcaisses
+    nbBoxesOnHoles = 0 #Reset the number of boxes on holes (fix to issue where the number of boxes on holes would be incremented with each move)
+    for i in range(len(game_board)): #Check if the number of boxes on holes is equal to the number of boxes
+        nbBoxesOnHoles += game_board[i].count('*')
+    return nbBoxesOnHoles == nbcaisses
 
 def win():
     global backgd, can_move
@@ -122,233 +138,238 @@ def win():
 """MOVEMENT FUNCTIONS - UP, DOWN, LEFT, RIGHT + BOX LOGIC """
 def up(evt):
     global x_char, y_char, backgd, movecount, char, game_board, caisse, pushes, can_move
+
     if not can_move:
         return
+
+    new_y = y_char[0] - 50
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_y = new_y // 50
+
+    if next_y < 0 or game_board[next_y][current_x] in ['#', '*']:
+        return
+
+    if game_board[next_y][current_x] == '$':
+        new_box_y = new_y - 50
+        next_box_y = new_box_y // 50
+
+        if next_box_y < 0 or game_board[next_box_y][current_x] not in [' ', '.', '*']:
+            return
+
+        game_board[next_y][current_x] = ' '
+        if game_board[next_box_y][current_x] == '.':
+            game_board[next_box_y][current_x] = '*'
+        else:
+            game_board[next_box_y][current_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [current_x * 50 + 25, next_y * 50 + 25]:
+                backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)
+                break
+
+        pushes += 1
+        info_pushes.config(text='Poussées : ' + str(pushes))
+
+    if game_board[current_y][current_x] == '+':
+        game_board[current_y][current_x] = '.'
     else:
-        # Calculate new y position for player
-        new_y = y_char[0] - 50
-        current_x = x_char[0] // 50
-        current_y = y_char[0] // 50
-        next_y = new_y // 50
+        game_board[current_y][current_x] = ' '
 
-        # Check if next tile is a WALL and avoid out of bounds
-        if next_y < 0 or game_board[next_y][current_x] == '#':
-            return #CANT MOVE
+    if game_board[next_y][current_x] == '.':
+        game_board[next_y][current_x] = '+'
+    else:
+        game_board[next_y][current_x] = '@'
 
-        # Check if there is a box to push
-        if game_board[next_y][current_x] == '$':
-            # Calculate the new position of the box
-            new_box_y = new_y - 50
-            next_box_y = new_box_y // 50
+    backgd.coords(char, x_char[0], new_y)
+    y_char[0] = new_y
 
-            # Check if the space behind the box is EMPTY or HOLE
-            if next_box_y < 0 or game_board[next_box_y][current_x] not in [' ', '.']:
-                return  #CANT PUSH THE BOX
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
 
-            # Move the box
-            game_board[next_y][current_x] = ' '  # Replace the box with an empty space
-            if game_board[next_box_y][current_x] == '.':
-                game_board[next_box_y][current_x] = '$'  # Box on HOLE
-            else:
-                game_board[next_box_y][current_x] = '$'  # Box moved to an empty space
+    """#clear_console()
+    print(game_board)  # Debug print to check the game board state"""
 
-            # Update box position in the canvas
-            for i in range(len(caisse)):
-                coords = backgd.coords(caisse[i])
-                if coords == [current_x * 50 + 25, next_y * 50 + 25]:  # Find the box to move
-                    backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)  # Move the box
-                    break
-
-            pushes += 1
-            info_pushes.config(text='Poussées : ' + str(pushes))
-
-        # Move the player (update the game board and the canvas)
-        game_board[current_y][current_x] = ' '  # Replace player's old position with an empty space
-        game_board[next_y][current_x] = '@'     # Move player to the new position
-
-        # Update the character's y position
-        backgd.coords(char, x_char[0], new_y)
-        y_char[0] = new_y
-
-        # Update move count and display
-        movecount += 1
-        info_vmoves.config(text=str(movecount))
-
-        # Check if the player has won
-        if check_win():
-            win()
+    if check_win():
+        win()
 
 def left(evt):
     global x_char, y_char, backgd, movecount, char, game_board, caisse, pushes, can_move
 
     if not can_move:
         return
+
+    new_x = x_char[0] - 50
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_x = new_x // 50
+
+    if next_x < 0 or game_board[current_y][next_x] in ['#', '*']:
+        return
+
+    if game_board[current_y][next_x] == '$':
+        new_box_x = new_x - 50
+        next_box_x = new_box_x // 50
+
+        if next_box_x < 0 or game_board[current_y][next_box_x] not in [' ', '.', '*']:
+            return
+
+        game_board[current_y][next_x] = ' '
+        if game_board[current_y][next_box_x] == '.':
+            game_board[current_y][next_box_x] = '*'
+        else:
+            game_board[current_y][next_box_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [new_x + 25, current_y * 50 + 25]:
+                backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
+                break
+
+        pushes += 1
+        info_pushes.config(text='Poussées : ' + str(pushes))
+
+    if game_board[current_y][current_x] == '+':
+        game_board[current_y][current_x] = '.'
     else:
-        # Calculate new x position for player
-        new_x = x_char[0] - 50
-        current_x = x_char[0] // 50
-        current_y = y_char[0] // 50
-        next_x = new_x // 50
-
-        # Check if next tile is a WALL and avoid out of bounds
-        if next_x < 0 or game_board[current_y][next_x] == '#':
-            return #CANT MOVE
-
-        # Check if there is a box to push
-        if game_board[current_y][next_x] == '$':
-            # Calculate the position behind the box
-            new_box_x = new_x - 50
-            next_box_x = new_box_x // 50
-
-            # Check if the space behind the box is EMPTY or HOLE
-            if next_box_x < 0 or game_board[current_y][next_box_x] not in [' ', '.']:
-                return  #CANT PUSH THE BOX
-
-            # Move the box
-            game_board[current_y][next_x] = ' '
-            if game_board[current_y][next_box_x] == '.':
-                game_board[current_y][next_box_x] = '$'
-            else:
-                game_board[current_y][next_box_x] = '$'
-
-            for i in range(len(caisse)):
-                coords = backgd.coords(caisse[i])
-                if coords == [next_x * 50 + 25, current_y * 50 + 25]:
-                    backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
-                    break
-
-            pushes += 1
-            info_pushes.config(text='Poussées : ' + str(pushes))
-
-        # Move the player
         game_board[current_y][current_x] = ' '
+
+    if game_board[current_y][next_x] == '.':
+        game_board[current_y][next_x] = '+'
+    else:
         game_board[current_y][next_x] = '@'
-        backgd.coords(char, new_x, y_char[0])
-        x_char[0] = new_x
 
-        movecount += 1
-        info_vmoves.config(text=str(movecount))
+    backgd.coords(char, new_x, y_char[0])
+    x_char[0] = new_x
 
-        # Check if the player has won
-        if check_win():
-            win()
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
+
+    """#clear_console()
+    print(game_board)  # Debug print to check the game board state"""
+
+    if check_win():
+        win()
 
 def right(evt):
     global x_char, y_char, backgd, movecount, char, game_board, caisse, pushes, can_move
 
     if not can_move:
         return
+
+    new_x = x_char[0] + 50
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_x = new_x // 50
+
+    if next_x >= len(game_board[0]) or game_board[current_y][next_x] in ['#', '*']:
+        return
+
+    if game_board[current_y][next_x] == '$':
+        new_box_x = new_x + 50
+        next_box_x = new_box_x // 50
+
+        if next_box_x >= len(game_board[0]) or game_board[current_y][next_box_x] not in [' ', '.', '*']:
+            return
+
+        game_board[current_y][next_x] = ' '
+        if game_board[current_y][next_box_x] == '.':
+            game_board[current_y][next_box_x] = '*'
+        else:
+            game_board[current_y][next_box_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [new_x + 25, current_y * 50 + 25]:
+                backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
+                break
+
+        pushes += 1
+        info_pushes.config(text='Poussées : ' + str(pushes))
+
+    if game_board[current_y][current_x] == '+':
+        game_board[current_y][current_x] = '.'
     else:
-        # Calculate new x position for player
-        new_x = x_char[0] + 50
-        current_x = x_char[0] // 50
-        current_y = y_char[0] // 50
-        next_x = new_x // 50
-
-        # Check if next tile is a WALL and avoid out of bounds
-        if next_x >= len(game_board[0]) or game_board[current_y][next_x] == '#':
-            return #CANT MOVE
-
-        # Check if there is a box to push
-        if game_board[current_y][next_x] == '$':
-            # Calculate the position behind the box
-            new_box_x = new_x + 50
-            next_box_x = new_box_x // 50
-
-            # Check if the space behind the box is EMPTY or HOLE
-            if next_box_x >= len(game_board[0]) or game_board[current_y][next_box_x] not in [' ', '.']:
-                return  #CANT PUSH THE BOX
-
-            # Move the box
-            game_board[current_y][next_x] = ' '
-            if game_board[current_y][next_box_x] == '.':
-                game_board[current_y][next_box_x] = '$'  # Box on a goal
-            else:
-                game_board[current_y][next_box_x] = '$'  # Box in an empty space
-
-            # Update the box's position in the canvas
-            for i in range(len(caisse)):
-                coords = backgd.coords(caisse[i])
-                if coords == [next_x * 50 + 25, current_y * 50 + 25]:
-                    backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
-                    break
-
-            pushes += 1
-            info_pushes.config(text='Poussées : ' + str(pushes))
-
-        # Move the player
         game_board[current_y][current_x] = ' '
+
+    if game_board[current_y][next_x] == '.':
+        game_board[current_y][next_x] = '+'
+    else:
         game_board[current_y][next_x] = '@'
-        backgd.coords(char, new_x, y_char[0])
-        x_char[0] = new_x
 
-        # Update move count and display
-        movecount += 1
-        info_vmoves.config(text=str(movecount))
+    backgd.coords(char, new_x, y_char[0])
+    x_char[0] = new_x
 
-        # Check if the player has won
-        if check_win():
-            win()
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
+
+    """#clear_console()
+    print(game_board)  # Debug print to check the game board state"""
+
+    if check_win():
+        win()
 
 def down(evt):
     global x_char, y_char, backgd, movecount, char, game_board, caisse, pushes, can_move
 
     if not can_move:
         return
+
+    new_y = y_char[0] + 50
+    current_x = x_char[0] // 50
+    current_y = y_char[0] // 50
+    next_y = new_y // 50
+
+    if next_y >= len(game_board) or game_board[next_y][current_x] in ['#', '*']:
+        return
+
+    if game_board[next_y][current_x] == '$':
+        new_box_y = new_y + 50
+        next_box_y = new_box_y // 50
+
+        if next_box_y >= len(game_board) or game_board[next_box_y][current_x] not in [' ', '.', '*']:
+            return
+
+        game_board[next_y][current_x] = ' '
+        if game_board[next_box_y][current_x] == '.':
+            game_board[next_box_y][current_x] = '*'
+        else:
+            game_board[next_box_y][current_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [current_x * 50 + 25, new_y + 25]:
+                backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)
+                break
+
+        pushes += 1
+        info_pushes.config(text='Poussées : ' + str(pushes))
+
+    if game_board[current_y][current_x] == '+':
+        game_board[current_y][current_x] = '.'
     else:
-        # Calculate new y position for player
-        new_y = y_char[0] + 50
-        current_x = x_char[0] // 50
-        current_y = y_char[0] // 50
-        next_y = new_y // 50
-
-        # Check if next tile is a WALL and avoid out of bounds
-        if next_y >= len(game_board) or game_board[next_y][current_x] == '#':
-            return #CANT MOVE
-
-        # Check if there is a box to push
-        if game_board[next_y][current_x] == '$':
-            # Calculate the position behind the box
-            new_box_y = new_y + 50
-            next_box_y = new_box_y // 50
-
-            # Check if the space behind the box is EMPTY or HOLE
-            if next_box_y >= len(game_board) or game_board[next_box_y][current_x] not in [' ', '.']:
-                return  #CANT PUSH THE BOX
-
-            # Move the box
-            game_board[next_y][current_x] = ' '
-            if game_board[next_box_y][current_x] == '.':
-                game_board[next_box_y][current_x] = '$'  # Box on a goal
-            else:
-                game_board[next_box_y][current_x] = '$'  # Box in an empty space
-
-            # Update the box's position in the canvas
-            for i in range(len(caisse)):
-                coords = backgd.coords(caisse[i])
-                if coords == [current_x * 50 + 25, next_y * 50 + 25]:
-                    backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)
-                    break
-
-            pushes += 1
-            info_pushes.config(text='Poussées : ' + str(pushes))
-
-        # Move the player
         game_board[current_y][current_x] = ' '
+
+    if game_board[next_y][current_x] == '.':
+        game_board[next_y][current_x] = '+'
+    else:
         game_board[next_y][current_x] = '@'
-        backgd.coords(char, x_char[0], new_y)
-        y_char[0] = new_y
 
-        # Update move count and display
-        movecount += 1
-        info_vmoves.config(text=str(movecount))
+    backgd.coords(char, x_char[0], new_y)
+    y_char[0] = new_y
 
-        # Check if the player has won
-        if check_win():
-            win()
+    movecount += 1
+    info_vmoves.config(text=str(movecount))
+
+    """#clear_console()
+    print(game_board)  # Debug print to check the game board state"""
+
+    if check_win():
+        win()
 
 def abandon():
-    global game_board, x_char, y_char, x_caisse, y_caisse, caisse, nbcaisses, pushes, movecount, can_move
+    global game_board, x_char, y_char, x_caisse, y_caisse, caisse, nbcaisses, pushes, movecount, can_move, nbBoxesOnHoles
 
     # Reset the game board to the initial state and variables
     game_board = copy.deepcopy(initial_game_board)
@@ -359,12 +380,12 @@ def abandon():
     caisse = []
     pushes = 0
     movecount = 0
+    nbBoxesOnHoles = 0
     can_move = True
     backgd.delete('all')
     draw_board()
     info_vmoves.config(text=str(movecount))
     info_pushes.config(text='Poussées : ' + str(pushes))
-    print("Game reset") #TODO: ENLEVER DEBUG
 
 
 #END FONCTIONS----------------------------------------------------
@@ -383,6 +404,4 @@ window.bind_all('<d>', right)
 #END COMMANDES----------------------------------------------------
 
 draw_board()
-print(nbcaisses)
-print(x_char, y_char)
 window.mainloop()
