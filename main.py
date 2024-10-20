@@ -212,6 +212,7 @@ def win():
     can_move = False
     backgd.create_text(len(board[0]) * dim_case // 2, len(board) * dim_case // 2, text="You win!", font=("Helvetica", 32, "bold"))
 
+#TODO: movecount not resetting properly when movecount >= 10 !!!!!!!
 def reset_game():
     global board, board_init, backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, movecount, pushcount, bestmoves, bestpushes, can_move
     board = copy.deepcopy(board_init)
