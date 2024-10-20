@@ -10,8 +10,8 @@ Sokoban is a japanese puzzle game where you push boxes into holes. Currently sch
   - **Q** - Left
   - **S** - Down
   - **D** - Right
-- **Level Management**: Supports multiple levels with varying difficulty.
-- **Score Tracking**: Keeps track of your score, best scores, and number of pushes.
+- **Level Management**: Supports multiple levels in txt format with varying difficulty.
+- **Score Tracking**: Keeps track of your score, best scores (TODO), and number of pushes.
 - **Visual Feedback**: Displays the current status and allows players to see their progress.
 - **Restart Functionality**: Restart the game at any time.
 
