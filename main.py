@@ -1,10 +1,36 @@
 import tkinter as tk
 import copy
 import os
+import csv
 
 window = tk.Tk()
 window.title('Sokoban')
 LVL_FOLDER = 'levels/'
+current_lvl = 0
+
+#make directory for score data csv file
+try:
+    os.mkdir("score_data")
+    print(f"Directory '{"score_data"}' created successfully.")
+except FileExistsError:
+    print(f"Directory '{"score_data"}' already exists.")
+except PermissionError:
+    print(f"Permission denied: Unable to create '{"score_data"}'.")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+#Create csv file for score tracking
+score_path = "score_data/scores.csv"
+
+data = [['Level', 'Moves', 'Pushes']]
+for i in range(len(os.listdir("levels/"))):
+    data.append([0,0,0])
+with open(score_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(data)
+
+
+#initial var
 dim_case = 50
 mur = tk.PhotoImage(file="assets/wall.gif")
 perso = tk.PhotoImage(file="assets/homme.gif")
@@ -37,8 +63,8 @@ def level_to_list(level_filename):
         with open(level_path, 'r') as level_file:
             level_content = level_file.readlines()  # Read all lines into a list
 
-        # Process the level content into a list of lists (2D board)
-        # Note: Do NOT use strip() here as it would remove leading/trailing spaces
+        # Process the level content into a list of lists game board
+        #DONT USE STRIP() !!!
         board = [list(line.rstrip('\n')) for line in level_content]  # Only strip newlines
 
         return board
@@ -75,7 +101,7 @@ def main_menu():
     exit_button = tk.Button(window, text="Exit", font=("Helvetica", 14), width=15, command=window.quit)
     exit_button.pack(pady=20)
 
-#TODO: dynamic list size for levels depending on the number of levels in the folder (not harcoding it like it is now)
+#TODO: dynamic list size for levels depending on the number of levels in the folder (not harcoding it like rn)
 def level_selection():
     """Opens the level selection screen and hides the menu."""
     # Hide the main menu
@@ -100,7 +126,10 @@ def level_selection():
 
 def start_game(level_number, level_selection_window):
     """Starts the game with the selected level."""
-    global board
+    global board, current_lvl
+
+    current_lvl = level_number
+    print(current_lvl)
     # Hide the level selection window
     level_selection_window.withdraw()
 
@@ -110,7 +139,7 @@ def start_game(level_number, level_selection_window):
     # Load the selected level
     level_filename = f"Level{level_number}.txt"
     board = level_to_list(level_filename)
-    print(board)  # DEBUG
+    #print(board)  DEBUG
 
     # Check if the level was loaded successfully
     if board is None:
@@ -268,6 +297,7 @@ def up(evt):
                 break
 
         pushcount += 1
+
         pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
         pushes.grid(row=1, column=len(board[0]), sticky='w')
 
