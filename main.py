@@ -2,6 +2,7 @@ import tkinter as tk
 import copy
 import os
 import csv
+import time
 
 window = tk.Tk()
 window.title('Sokoban')
@@ -23,11 +24,12 @@ except Exception as e:
 score_path = "score_data/scores.csv"
 
 data = [['Level', 'Moves', 'Pushes']]
-for i in range(len(os.listdir("levels/"))):
-    data.append([0,0,0])
-with open(score_path, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerows(data)
+if not os.path.exists(score_path):
+    for i in range(len(os.listdir("levels/"))):
+        data.append([0,0,0])
+    with open(score_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
 
 
 #initial var
@@ -48,6 +50,8 @@ bestpushes = 0
 can_move = True
 
 #GAME FUNCTIONS ---------------------------------------------------
+
+
 def clear_main_menu():
     """Clears the main menu widgets."""
     for widget in window.winfo_children():
@@ -75,15 +79,17 @@ def level_to_list(level_filename):
 
 def main_menu():
     """Creates the main menu for the game."""
-    global can_move, movecount, pushcount
+    global can_move, movecount, pushcount, current_time, start_time
     can_move = True
     movecount = 0
     pushcount = 0
+    current_time = 0
+    start_time = time.time()
 
     window.title("Sokoban - Menu")
 
     # Set window size and position
-    window.geometry("400x400")  # Adjust the size as per your requirement
+    window.geometry("600x600")
 
     # Clear any previous widgets
     for widget in window.winfo_children():
@@ -159,28 +165,43 @@ def start_game(level_number, level_selection_window):
         level_selection_window.destroy()
         playgame(board)
 
+def time_count():
+    global start_time, current_time, clock
+    current_time = int(time.time() - start_time)
+    window.after(500, time_count)
+    clock.config(text="Temps : " + str(current_time//100) + str((current_time//10)%10) + str(current_time%10))
+
+
 def playgame(board):
     # Creates a new window and draws the board
     window.title("Sokoban - Game")
-    global backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, nbcaisses, nbcaisses_a_pousser, dim_case, board_init, movecount, pushcount, bestmoves, bestpushes
+    global backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, nbcaisses, nbcaisses_a_pousser, dim_case, board_init, movecount, pushcount, bestmoves, bestpushes, current_time, clock
     backgd = tk.Canvas(window, width=len(board[0]) * dim_case, height=len(board) * dim_case, bg="#FFFFFF")
 
+    #open csv file to get best moves and pushes for this level
+    with open(score_path, mode='r') as file:
+        reader = csv.reader(file)
+        data = list(reader)
+        bestmoves = data[current_lvl][1]
+        bestpushes = data[current_lvl][2]
     #Set x_char and y_char to empty lists
     x_char = []
     y_char = []
+
     # Count the number of boxes on the board:
     nbcaisses = 0
     for i in range(len(board)):
         for j in range(len(board[0])):
             if board[i][j] == '$':
                 nbcaisses += 1
+
     # Make a copy of the board to reset the game
     board_init = copy.deepcopy(board)
 
     # Add scores and Reset button to the window, on the right side using rows and columns
-    moves = tk.Label(window, text="Moves: " + str(movecount), font=("Helvetica", 16))
+    moves = tk.Label(window, text="Moves: " + str(movecount//100) + str((movecount//10)%10) + str(movecount%10), font=("Helvetica", 16))
     moves.grid(row=0, column=len(board[0]), sticky='w')
-    pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
+    pushes = tk.Label(window, text="Pushes: " + str(pushcount//100) + str((pushcount//10)%10) + str(pushcount%10), font=("Helvetica", 16))
     pushes.grid(row=1, column=len(board[0]), sticky='w')
     best_moves = tk.Label(window, text="Best Moves: " + str(bestmoves), font=("Helvetica", 16))
     best_moves.grid(row=2, column=len(board[0]), sticky='w')
@@ -190,7 +211,10 @@ def playgame(board):
     reset.grid(row=4, column=len(board[0]), sticky='w')
     backToMenu = tk.Button(window, text="Back to Menu", font=("Helvetica", 16), command=main_menu)
     backToMenu.grid(row=5, column=len(board[0]), sticky='w')
+    clock = tk.Label(window, text="Time: " , font=("Helvetica", 16))
+    clock.grid(row=6, column=len(board[0]), sticky='w')
 
+    time_count()
     # Calculate the required window size
     window_width = len(board[0]) * dim_case + 200  # Additional space for scoreboards
     window_height = len(board) * dim_case + 100  # Additional space for scoreboards
@@ -241,9 +265,21 @@ def win():
     can_move = False
     backgd.create_text(len(board[0]) * dim_case // 2, len(board) * dim_case // 2, text="You win!", font=("Helvetica", 32, "bold"))
 
-#TODO: movecount not resetting properly when movecount >= 10 !!!!!!!
+    #update csv file with best moves and pushes for this level
+    with open(score_path, mode='r') as file:
+        reader = csv.reader(file)
+        data = list(reader)
+        data[current_lvl][0] = current_lvl
+        data[current_lvl][1] = movecount
+        data[current_lvl][2] = pushcount
+    with open(score_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
+    file.close()
+
+
 def reset_game():
-    global board, board_init, backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, movecount, pushcount, bestmoves, bestpushes, can_move
+    global board, board_init, backgd, char, caisse, x_char, y_char, x_caisse, y_caisse, movecount, pushcount, bestmoves, bestpushes, can_move, start_time, current_time
     board = copy.deepcopy(board_init)
     backgd.delete("all")
     x_char.clear()
@@ -257,12 +293,12 @@ def reset_game():
     pushcount = 0
     pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
     pushes.grid(row=1, column=len(board[0]), sticky='w')
-
+    start_time = time.time()
+    current_time = 0
     can_move = True
     playgame(board)
 
 """MOVEMENT FUNCTIONS"""
-#TODO: fix bug when you psuh a box into another box for each direction
 def up(evt):
     global x_char, y_char, backgd, movecount, char, board, caisse, pushes, can_move, pushcount
 
@@ -274,14 +310,37 @@ def up(evt):
     current_y = y_char[0] // 50
     next_y = new_y // 50
 
-    if next_y < 0 or board[next_y][current_x] in ['#', '*']:
+    if next_y < 0 or board[next_y][current_x] in ['#']:
         return
+
+    if board[next_y][current_x] == '*':
+        new_box_y = new_y - 50
+        next_box_y = new_box_y // 50
+
+        if next_box_y < 0 or board[next_box_y][current_x] not in [' ', '.', '*']:
+            return
+
+        board[next_y][current_x] = '.'
+        if board[next_box_y][current_x] == '.':
+            board[next_box_y][current_x] = '*'
+        else:
+            board[next_box_y][current_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [current_x * 50 + 25, new_y + 25]:
+                backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)
+                break
+
+        pushcount += 1
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
+        pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[next_y][current_x] == '$':
         new_box_y = new_y - 50
         next_box_y = new_box_y // 50
 
-        if next_box_y < 0 or board[next_box_y][current_x] not in [' ', '.', '*']:
+        if next_box_y < 0 or board[next_box_y][current_x] not in [' ', '.']:
             return
 
         board[next_y][current_x] = ' '
@@ -297,8 +356,7 @@ def up(evt):
                 break
 
         pushcount += 1
-
-        pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
         pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][current_x] == '+':
@@ -316,7 +374,7 @@ def up(evt):
 
     movecount += 1
     # Update the movecount label
-    moves = tk.Label(window, text="Moves: " + str(movecount), font=("Helvetica", 16))
+    moves = tk.Label(window, text="Moves: " + str(movecount // 100) + str((movecount // 10) % 10) + str(movecount % 10),font=("Helvetica", 16))
     moves.grid(row=0, column=len(board[0]), sticky='w')
 
     if check_win():
@@ -333,14 +391,37 @@ def left(evt):
     current_y = y_char[0] // 50
     next_x = new_x // 50
 
-    if next_x < 0 or board[current_y][next_x] in ['#', '*']:
+    if next_x < 0 or board[current_y][next_x] in ['#']:
         return
+
+    if board[current_y][next_x] == '*':
+        new_box_x = new_x - 50
+        next_box_x = new_box_x // 50
+
+        if next_box_x < 0 or board[current_y][next_box_x] not in [' ', '.', '*']:
+            return
+
+        board[current_y][next_x] = '.'
+        if board[current_y][next_box_x] == '.':
+            board[current_y][next_box_x] = '*'
+        else:
+            board[current_y][next_box_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [new_x + 25, current_y * 50 + 25]:
+                backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
+                break
+
+        pushcount += 1
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
+        pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][next_x] == '$':
         new_box_x = new_x - 50
         next_box_x = new_box_x // 50
 
-        if next_box_x < 0 or board[current_y][next_box_x] not in [' ', '.', '*']:
+        if next_box_x < 0 or board[current_y][next_box_x] not in [' ', '.']:
             return
 
         board[current_y][next_x] = ' '
@@ -356,7 +437,7 @@ def left(evt):
                 break
 
         pushcount += 1
-        pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
         pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][current_x] == '+':
@@ -373,7 +454,7 @@ def left(evt):
     x_char[0] = new_x
 
     movecount += 1
-    moves = tk.Label(window, text="Moves: " + str(movecount), font=("Helvetica", 16))
+    moves = tk.Label(window, text="Moves: " + str(movecount//100) + str((movecount//10)%10) + str(movecount%10), font=("Helvetica", 16))
     moves.grid(row=0, column=len(board[0]), sticky='w')
 
     if check_win():
@@ -390,14 +471,37 @@ def down(evt):
     current_y = y_char[0] // 50
     next_y = new_y // 50
 
-    if next_y >= len(board) or board[next_y][current_x] in ['#', '*']:
+    if next_y >= len(board) or board[next_y][current_x] in ['#']:
         return
+
+    if board[next_y][current_x] == '*':
+        new_box_y = new_y + 50
+        next_box_y = new_box_y // 50
+
+        if next_box_y >= len(board) or board[next_box_y][current_x] not in [' ', '.', '*']:
+            return
+
+        board[next_y][current_x] = '.'
+        if board[next_box_y][current_x] == '.':
+            board[next_box_y][current_x] = '*'
+        else:
+            board[next_box_y][current_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [current_x * 50 + 25, new_y + 25]:
+                backgd.coords(caisse[i], current_x * 50 + 25, new_box_y + 25)
+                break
+
+        pushcount += 1
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
+        pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[next_y][current_x] == '$':
         new_box_y = new_y + 50
         next_box_y = new_box_y // 50
 
-        if next_box_y >= len(board) or board[next_box_y][current_x] not in [' ', '.', '*']:
+        if next_box_y >= len(board) or board[next_box_y][current_x] not in [' ', '.']:
             return
 
         board[next_y][current_x] = ' '
@@ -413,7 +517,7 @@ def down(evt):
                 break
 
         pushcount += 1
-        pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
         pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][current_x] == '+':
@@ -430,7 +534,7 @@ def down(evt):
     y_char[0] = new_y
 
     movecount += 1
-    moves = tk.Label(window, text="Moves: " + str(movecount), font=("Helvetica", 16))
+    moves = tk.Label(window, text="Moves: " + str(movecount//100) + str((movecount//10)%10) + str(movecount%10), font=("Helvetica", 16))
     moves.grid(row=0, column=len(board[0]), sticky='w')
 
     if check_win():
@@ -447,15 +551,37 @@ def right(evt):
     current_y = y_char[0] // 50
     next_x = new_x // 50
 
-    #TODO: fix bug when you psuh a box into another box for each direction
-    if next_x >= len(board[0]) or board[current_y][next_x] in ['#', '*']:
+    if next_x >= len(board[0]) or board[current_y][next_x] in ['#']:
         return
+
+    if board[current_y][next_x] == '*':
+        new_box_x = new_x + 50
+        next_box_x = new_box_x // 50
+
+        if next_box_x >= len(board[0]) or board[current_y][next_box_x] not in [' ', '.', '*']:
+            return
+
+        board[current_y][next_x] = '.'
+        if board[current_y][next_box_x] == '.':
+            board[current_y][next_box_x] = '*'
+        else:
+            board[current_y][next_box_x] = '$'
+
+        for i in range(len(caisse)):
+            coords = backgd.coords(caisse[i])
+            if coords == [new_x + 25, current_y * 50 + 25]:
+                backgd.coords(caisse[i], new_box_x + 25, current_y * 50 + 25)
+                break
+
+        pushcount += 1
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
+        pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][next_x] == '$':
         new_box_x = new_x + 50
         next_box_x = new_box_x // 50
 
-        if next_box_x >= len(board[0]) or board[current_y][next_box_x] not in [' ', '.', '*']:
+        if next_box_x >= len(board[0]) or board[current_y][next_box_x] not in [' ', '.']:
             return
 
         board[current_y][next_x] = ' '
@@ -471,7 +597,7 @@ def right(evt):
                 break
 
         pushcount += 1
-        pushes = tk.Label(window, text="Pushes: " + str(pushcount), font=("Helvetica", 16))
+        pushes = tk.Label(window,text="Pushes: " + str(pushcount // 100) + str((pushcount // 10) % 10) + str(pushcount % 10),font=("Helvetica", 16))
         pushes.grid(row=1, column=len(board[0]), sticky='w')
 
     if board[current_y][current_x] == '+':
@@ -488,7 +614,7 @@ def right(evt):
     x_char[0] = new_x
 
     movecount += 1
-    moves = tk.Label(window, text="Moves: " + str(movecount), font=("Helvetica", 16))
+    moves = tk.Label(window, text="Moves: " + str(movecount//100) + str((movecount//10)%10) + str(movecount%10), font=("Helvetica", 16))
     moves.grid(row=0, column=len(board[0]), sticky='w')
 
     if check_win():
@@ -503,4 +629,5 @@ window.bind_all('<d>', right)
 #END COMMANDES----------------------------------------------------
 
 main_menu()
+start_time = time.time()
 window.mainloop()
